@@ -112,7 +112,50 @@
         </table>
     </div>
 
+<?php /* -- @sinelun (task 2020-09-29 /4) : "4. Поле для ввода купона должно идти после товаров." --  */ ?>
+
+<?php if (isset($modules['coupon'])) { ?>
+<div class="simplecheckout-cart-total">
+    <span class="inputs"><?php echo $entry_coupon; ?>&nbsp;<input class="form-control" type="text" data-onchange="reloadAll" name="coupon" value="<?php echo $coupon; ?>" /></span>
+</div>
+<?php } ?>
+<?php if (isset($modules['reward']) && $points > 0) { ?>
+<div class="simplecheckout-cart-total">
+    <span class="inputs"><?php echo $entry_reward; ?>&nbsp;<input class="form-control" type="text" name="reward" data-onchange="reloadAll" value="<?php echo $reward; ?>" /></span>
+</div>
+<?php } ?>
+<?php if (isset($modules['voucher'])) { ?>
+<div class="simplecheckout-cart-total">
+    <span class="inputs"><?php echo $entry_voucher; ?>&nbsp;<input class="form-control" type="text" name="voucher" data-onchange="reloadAll" value="<?php echo $voucher; ?>" /></span>
+</div>
+<?php } ?>
 <?php foreach ($totals as $total) { ?>
+<div class="simplecheckout-cart-total" id="total_<?php echo $total['code']; ?>">
+    <span><b><?php echo $total['title']; ?>:</b></span>
+    <span class="simplecheckout-cart-total-value"><?php echo $total['text']; ?></span>
+    <span class="simplecheckout-cart-total-remove">
+            <?php if ($total['code'] == 'coupon') { ?>
+        <i data-onclick="removeCoupon" title="<?php echo $button_remove; ?>" class="fa fa-times-circle"></i>
+        <?php } ?>
+        <?php if ($total['code'] == 'voucher') { ?>
+        <i data-onclick="removeVoucher" title="<?php echo $button_remove; ?>" class="fa fa-times-circle"></i>
+        <?php } ?>
+        <?php if ($total['code'] == 'reward') { ?>
+        <i data-onclick="removeReward" title="<?php echo $button_remove; ?>" class="fa fa-times-circle"></i>
+        <?php } ?>
+        </span>
+</div>
+<?php } ?>
+
+<?php /* -- the end of @sinelun 's insertion --  */ ?>
+
+
+<?php /* -- @sinelun (task 2020-09-29 /4).
+            The next code constructions ('if (false) { //') are intended for excluding original code from the output.
+            Remove them to return to the original.
+ --  */ ?>
+
+<?php if (false) { // foreach ($totals as $total) { ?>
     <div class="simplecheckout-cart-total" id="total_<?php echo $total['code']; ?>">
         <span><b><?php echo $total['title']; ?>:</b></span>
         <span class="simplecheckout-cart-total-value"><?php echo $total['text']; ?></span>
@@ -129,21 +172,24 @@
         </span>
     </div>
 <?php } ?>
-<?php if (isset($modules['coupon'])) { ?>
+<?php if (false) { // if (isset($modules['coupon'])) { ?>
     <div class="simplecheckout-cart-total">
         <span class="inputs"><?php echo $entry_coupon; ?>&nbsp;<input class="form-control" type="text" data-onchange="reloadAll" name="coupon" value="<?php echo $coupon; ?>" /></span>
     </div>
 <?php } ?>
-<?php if (isset($modules['reward']) && $points > 0) { ?>
+<?php if (false) { // if (isset($modules['reward']) && $points > 0) { ?>
     <div class="simplecheckout-cart-total">
         <span class="inputs"><?php echo $entry_reward; ?>&nbsp;<input class="form-control" type="text" name="reward" data-onchange="reloadAll" value="<?php echo $reward; ?>" /></span>
     </div>
 <?php } ?>
-<?php if (isset($modules['voucher'])) { ?>
+<?php if (false) { // if (isset($modules['voucher'])) { ?>
     <div class="simplecheckout-cart-total">
         <span class="inputs"><?php echo $entry_voucher; ?>&nbsp;<input class="form-control" type="text" name="voucher" data-onchange="reloadAll" value="<?php echo $voucher; ?>" /></span>
     </div>
 <?php } ?>
+
+<?php /* -- the end of @sinelun 's edition --  */ ?>
+
 <?php if (isset($modules['coupon']) || (isset($modules['reward']) && $points > 0) || isset($modules['voucher'])) { ?>
     <div class="simplecheckout-cart-total simplecheckout-cart-buttons">
         <span class="inputs buttons"><a id="simplecheckout_button_cart" data-onclick="reloadAll" class="button btn-primary button_oc btn"><span><?php echo $button_update; ?></span></a></span>
