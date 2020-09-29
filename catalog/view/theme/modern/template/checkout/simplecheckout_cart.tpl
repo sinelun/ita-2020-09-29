@@ -112,7 +112,7 @@
         </table>
     </div>
 
-<?php /* -- @sinelun (task 2020-09-29 /4) : "4. Поле для ввода купона должно идти после товаров." --  */ ?>
+<?php /* -- Task 2020-09-29/4 ("4. Поле для ввода купона должно идти после товаров.") by sinelun@gmail.com --  */ ?>
 
 <?php if (isset($modules['coupon'])) { ?>
 <div class="simplecheckout-cart-total">
@@ -147,10 +147,10 @@
 </div>
 <?php } ?>
 
-<?php /* -- the end of @sinelun 's insertion --  */ ?>
+<?php /* -- the end of sinelun@gmail.com 's insertion --  */ ?>
 
 
-<?php /* -- @sinelun (task 2020-09-29 /4).
+<?php /* -- Task 2020-09-29/4 (2) by sinelun@gmail.com
             The next code constructions ('if (false) { //') are intended for excluding original code from the output.
             Remove them to return to the original.
  --  */ ?>
@@ -188,7 +188,7 @@
     </div>
 <?php } ?>
 
-<?php /* -- the end of @sinelun 's edition --  */ ?>
+<?php /* -- the end of sinelun@gmail.com 's edition --  */ ?>
 
 <?php if (isset($modules['coupon']) || (isset($modules['reward']) && $points > 0) || isset($modules['voucher'])) { ?>
     <div class="simplecheckout-cart-total simplecheckout-cart-buttons">
