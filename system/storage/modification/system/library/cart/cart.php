@@ -288,7 +288,10 @@ class Cart {
 					'cart_id'         => $cart['cart_id'],
 					'product_id'      => $product_query->row['product_id'],
 					'name'            => $product_query->row['name'],
-					'model'           => $product_query->row['model'],
+/* -- Task 2020-09-29/8 "8. Вместо "Модель" нужно, чтобы отображался артикул (мы поле модель не будем использовать больше)." by sinelun@gmail.com : /1+1 -- */
+//					'model'           => $product_query->row['model'],
+					'model'           => $product_query->row['sku'],
+/* -- / Task 2020-09-29/8 -- */
 					'shipping'        => $product_query->row['shipping'],
 					'image'           => $product_query->row['image'],
 					'option'          => $option_data,
