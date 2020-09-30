@@ -225,8 +225,14 @@ class Cart {
 
 				$product_discount_query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product_discount WHERE product_id = '" . (int)$cart['product_id'] . "' AND customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND quantity <= '" . (int)$discount_quantity . "' AND ((date_start = '0000-00-00' OR date_start < NOW()) AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY quantity DESC, priority ASC, price ASC LIMIT 1");
 
+/* -- Task 2020-09-29/1 (1) "1. Чтобы купоны применялся только к товару без акции." by sinelun@gmail.com -- */
+				$has_discount = false;
+/* -- / by sinelun@gmail.com -- */
 				if ($product_discount_query->num_rows) {
 					$price = $product_discount_query->row['price'];
+/* -- Task 2020-09-29/1 (2) sinelun@gmail.com -- */
+					$has_discount = true;
+/* -- / by sinelun@gmail.com -- */
 				}
 
 				// Product Specials
@@ -291,7 +297,7 @@ class Cart {
 /* -- Task 2020-09-29/8 "8. Вместо "Модель" нужно, чтобы отображался артикул (мы поле модель не будем использовать больше)." by sinelun@gmail.com : /1+1 -- */
 //					'model'           => $product_query->row['model'],
 					'model'           => $product_query->row['sku'],
-/* -- / Task 2020-09-29/8 -- */
+/* -- / by sinelun@gmail.com -- */
 					'shipping'        => $product_query->row['shipping'],
 					'image'           => $product_query->row['image'],
 					'option'          => $option_data,
@@ -301,6 +307,9 @@ class Cart {
 					'subtract'        => $product_query->row['subtract'],
 					'stock'           => $stock,
 					'price'           => ($price + $option_price),
+/* -- Task 2020-09-29/1 (3) by sinelun@gmail.com -- */
+					'has_discount'     => true,  // есть ли скидка
+/* -- / by sinelun@gmail.com -- */
 					'total'           => ($price + $option_price) * $cart['quantity'],
 					'reward'          => $reward * $cart['quantity'],
 					'points'          => ($product_query->row['points'] ? ($product_query->row['points'] + $option_points) * $cart['quantity'] : 0),
