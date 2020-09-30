@@ -124,3 +124,14 @@ require_once(DIR_SYSTEM . 'helper/json.php');
 function start($application_config) {
 	require_once(DIR_SYSTEM . 'framework.php');	
 }
+
+
+// sinelun@gmail.com : FIXME delete when the debugging will be finished
+function sinLog($message, $label = '', $log = 'sinelun_debug.log') {
+
+	if(! is_string($message)) $message = var_export($message, true);
+
+	$f = fopen(DIR_LOGS . $log, 'a');
+	fwrite($f, "\n$label\n$message\n");
+	fclose($f);
+}
