@@ -226,13 +226,11 @@ class Cart {
 				$product_discount_query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product_discount WHERE product_id = '" . (int)$cart['product_id'] . "' AND customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND quantity <= '" . (int)$discount_quantity . "' AND ((date_start = '0000-00-00' OR date_start < NOW()) AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY quantity DESC, priority ASC, price ASC LIMIT 1");
 
 /* -- Task 2020-09-29/1 (1) "1. Чтобы купоны применялся только к товару без акции." by sinelun@gmail.com -- */
-				$has_discount = false;
+				$has_action = false;  // есть ли акция на товар
+				$old_price = $price;  // цена товара без скидки
 /* -- / by sinelun@gmail.com -- */
 				if ($product_discount_query->num_rows) {
 					$price = $product_discount_query->row['price'];
-/* -- Task 2020-09-29/1 (2) sinelun@gmail.com -- */
-					$has_discount = true;
-/* -- / by sinelun@gmail.com -- */
 				}
 
 				// Product Specials
@@ -240,6 +238,9 @@ class Cart {
 
 				if ($product_special_query->num_rows) {
 					$price = $product_special_query->row['price'];
+/* -- Task 2020-09-29/1 (2) by sinelun@gmail.com -- */
+					$has_action = true;  // на товар есть акция
+/* -- / by sinelun@gmail.com -- */
 				}
 
 				// Reward Points
@@ -308,7 +309,8 @@ class Cart {
 					'stock'           => $stock,
 					'price'           => ($price + $option_price),
 /* -- Task 2020-09-29/1 (3) by sinelun@gmail.com -- */
-					'has_discount'     => true,  // есть ли скидка
+					'old_price'       => ($old_price + $option_price),  // цена без скидки
+					'has_action'      => $has_action,  // есть ли скидка
 /* -- / by sinelun@gmail.com -- */
 					'total'           => ($price + $option_price) * $cart['quantity'],
 					'reward'          => $reward * $cart['quantity'],
