@@ -6,7 +6,10 @@ class ModelExtensionTotalCoupon extends Model {
 		$coupon_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "coupon` WHERE code = '" . $this->db->escape($code) . "' AND ((date_start = '0000-00-00' OR date_start < NOW()) AND (date_end = '0000-00-00' OR date_end > NOW())) AND status = '1'");
 
 		if ($coupon_query->num_rows) {
-			if ($coupon_query->row['total'] > $this->cart->getSubTotal()) {
+/* -- Task 2020-09-29/1 by sinelun@gmail.com : /1+1 -- */
+//			if ($coupon_query->row['total'] > $this->cart->getSubTotal()) {
+			if ($coupon_query->row['total'] > $this->cart->getSubTotalCoupon()) {
+/* -- / sinelun@gmail.com -- */
 				$status = false;
 			}
 
@@ -105,11 +108,17 @@ class ModelExtensionTotalCoupon extends Model {
 				$discount_total = 0;
 
 				if (!$coupon_info['product']) {
-					$sub_total = $this->cart->getSubTotal();
+/* -- Task 2020-09-29/1 by sinelun@gmail.com : /1+1 -- */
+//					$sub_total = $this->cart->getSubTotal();
+					$sub_total = $this->cart->getSubTotalCoupon();
+/* -- / sinelun@gmail.com -- */
 				} else {
 					$sub_total = 0;
 
-					foreach ($this->cart->getProducts() as $product) {
+/* -- Task 2020-09-29/1 (6) by sinelun@gmail.com : /1+1 -- */
+//					foreach ($this->cart->getProducts() as $product) {
+					foreach ($this->cart->getProductsCoupon() as $product) {
+/* -- / sinelun@gmail.com -- */
 						if (in_array($product['product_id'], $coupon_info['product'])) {
 							$sub_total += $product['total'];
 						}
@@ -120,7 +129,10 @@ class ModelExtensionTotalCoupon extends Model {
 					$coupon_info['discount'] = min($coupon_info['discount'], $sub_total);
 				}
 
-				foreach ($this->cart->getProducts() as $product) {
+/* -- Task 2020-09-29/1 (7) by sinelun@gmail.com : /1+1 -- */
+//				foreach ($this->cart->getProducts() as $product) {
+				foreach ($this->cart->getProductsCoupon() as $product) {
+/* -- / sinelun@gmail.com -- */
 					$discount = 0;
 
 					if (!$coupon_info['product']) {

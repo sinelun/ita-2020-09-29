@@ -352,6 +352,16 @@ class Cart {
 		return $product_data;
 	}
 
+/* -- Task 2020-09-29/1 (4) by sinelun@gmail.com -- */
+	private function product_has_action_filter($product) {
+		return ! $product['has_action'];
+	}
+
+	public function getProductsCoupon() {
+		return array_filter($this->getProducts(), array($this, 'product_has_action_filter'));
+	}
+/* -- / by sinelun@gmail.com -- */
+
 	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0) {
 		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
 
@@ -407,6 +417,22 @@ class Cart {
 
 		return $total;
 	}
+
+	/* -- Task 2020-09-29/1 by sinelun@gmail.com -- */
+	/**
+	 * For system\storage\modification\system\library\cart\cart.php :
+	 *  ModelExtensionTotalCoupon : getTotal($total) & getCoupon($code)
+	 */
+	public function getSubTotalCoupon() {
+		$total = 0;
+
+		foreach ($this->getProductsCoupon() as $product) {
+			$total += $product['total'];
+		}
+
+		return $total;
+	}
+	/* -- / by sinelun@gmail.com -- */
 
 	public function getTaxes() {
 		$tax_data = array();
