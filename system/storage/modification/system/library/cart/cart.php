@@ -2,6 +2,13 @@
 namespace Cart;
 class Cart {
 	private $data = array();
+/* -- Task 2020-09-29/10,11
+"10. Товарые услуги по ремонту, которые можно положить в корзину https://ita-group.ru/uslugi-po-remontu-i-obslujivaniu. Они сделаны как обычный товар. Но нам необходимо чтобы их сумма не учитывалась в корзине, так как оплата по ним осуществляется после оказания услуги.
+11. Чтобы сумма по услугам ремонта не считалась в ИТОГО в самой нижней строчке таблицы корзины."
+by sinelun@gmail.com -- */
+	public $remont_category_ids = array(316, 317, 318, 319, 554, 555, 556, 584);  // категории ремонта
+	private $remonts = array();  // товары категорий ремонта
+/* -- / by sinelun@gmail.com -- */
 
 	public function __construct($registry) {
 		$this->config = $registry->get('config');
@@ -352,14 +359,49 @@ class Cart {
 		return $product_data;
 	}
 
-/* -- Task 2020-09-29/1 (4) by sinelun@gmail.com -- */
+/* -- Task 2020-09-29/1,10,11 by sinelun@gmail.com -- */
+
+	/* - 10,11) Товары не относящиеся к ремонту - */
+
+	/**
+	 * Устанавливает товары, связанные с ремонтом
+	 */
+	private function setRemonts() {
+
+		$categories = implode(',', $this->remont_category_ids);
+
+		$remonts_query = $this->db->query("SELECT product_id FROM " . DB_PREFIX . "product_to_category WHERE category_id IN (" . $categories .  ")");
+
+		$remonts = array();
+		foreach ($remonts_query->rows as $row) {
+			$remonts[] = $row['product_id'];
+		}
+
+		$this->remonts = $remonts;
+
+	}
+
+	private function product_is_remont_filter($product) {
+		return ! in_array($product['product_id'], $this->remonts);
+	}
+
+	/**
+	 * Возвращает товары не относящиеся к ремонту
+	 */
+	public function getProductsWithoutRemonts() {
+		$this->setRemonts();
+		return array_filter($this->getProducts(), array($this, 'product_is_remont_filter'));
+	}
+
+	/* - 1) Не акционные товары для купонов - */
 	private function product_has_action_filter($product) {
 		return ! $product['has_action'];
 	}
 
 	public function getProductsCoupon() {
-		return array_filter($this->getProducts(), array($this, 'product_has_action_filter'));
+		return array_filter($this->getProductsWithoutRemonts(), array($this, 'product_has_action_filter'));
 	}
+
 /* -- / by sinelun@gmail.com -- */
 
 	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0) {
