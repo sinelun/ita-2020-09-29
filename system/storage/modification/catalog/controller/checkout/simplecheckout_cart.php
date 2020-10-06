@@ -13,7 +13,16 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
 
     private $_templateData = array();
 
-    private function init() {
+/* -- Task 2020-09-29/1,2 by sinelun@gmail.com --
+	1. Чтобы купоны применялся только к товару без акции.
+	2. Если есть акционный товар в корзине или применяется купон или и то и то:
+        2.1. Цена должна быть перечеркнутой в колонке цена.
+        2.2. Ниже должно быть написано, что применилось "купон" или "акция".
+*/
+    private $coupon_info = array();  // информация о купоне для расчёта цены со скидкой по купону
+/* -- / by sinelun@gmail.com -- */
+
+	private function init() {
         $this->loadLibrary('simple/simplecheckout');
 
         $this->simplecheckout = SimpleCheckout::getInstance($this->registry);
@@ -185,6 +194,10 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
 
         $points_total = 0;
 
+/* -- Task 2020-09-29/5 by sinelun@gmail.com -- */
+		$action_total = 0;
+/* -- / by sinelun@gmail.com -- */
+
         foreach ($products as $product) {
 
             $product_total = 0;
@@ -252,10 +265,19 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
             }
 
             if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
-                $price = $this->simplecheckout->formatCurrency($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')));
+/* -- Task 2020-09-29/2.1 by sinelun@gmail.com : /1+1
+		2.1. Цена должна быть перечеркнутой в колонке цена. -- (должна быть цена без скидки) --
+-- */
+//                $price = $this->simplecheckout->formatCurrency($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')));
+                $price = $this->simplecheckout->formatCurrency($this->tax->calculate($product['old_price'], $product['tax_class_id'], $this->config->get('config_tax')));
+/* -- / by sinelun@gmail.com -- */
             } else {
                 $price = false;
             }
+
+/* -- Task 2020-09-29/5 by sinelun@gmail.com -- */
+	        $this->coupon_price_calculation($product);
+/* -- / by sinelun@gmail.com -- */
 
             if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
                 $total = $this->simplecheckout->formatCurrency($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity']);
@@ -359,6 +381,20 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
                 );
             }
 
+/* -- Task 2020-09-29/2 by sinelun@gmail.com -- */
+	        $prod = array_pop($this->_templateData['products']);
+
+	        $prod['has_action']      = $product['has_action'];
+	        $prod['coupon_discount'] = $product['coupon_discount'];
+	        $prod['old_price']       = $product['old_price'];
+	        $prod['is_remont']       = $product['is_remont'];
+
+	        $this->_templateData['products'][] = $prod;
+
+	        if (! ($prod['is_remont'] || $prod['coupon_discount']))
+	            $action_total += ($product['old_price'] - $product['price']) * $product['quantity'];
+/* -- / by sinelun@gmail.com -- */
+
             if ($product['points']) {
                 $points_total += $product['points'];
             }
@@ -409,13 +445,16 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
             array_multisort($sort_order, SORT_ASC, $results);
 
             foreach ($results as $result) {
+
                 if ($this->config->get($result['code'] . '_status')) {
                     $this->simplecheckout->loadModel('total/' . $result['code']);
 
                     if ($version < 220) {
                         $this->{'model_total_' . $result['code']}->getTotal($totals, $total, $taxes);
                     } else {
+
                         $this->{'model_total_' . $result['code']}->getTotal($total_data);
+
                     }
 
                     $this->_templateData['modules'][$result['code']] = true;
@@ -434,6 +473,85 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
 
             array_multisort($sort_order, SORT_ASC, $totals);
         }
+
+/* -- Task 2020-09-29/5,6,7,10,11,12 by sinelun@gmail.com --
+	5. Поля скидка по акции и по купону ниже ячейки ввода купона.
+        5.1. Сумма 0, если ничего не применяется, поля не скрываются.
+        5.2. Если есть акционный товар/применяется купон, то показывается сумма скидки по акции/купону.
+*/
+
+	    $coupon_exists = false;
+
+	    $coupon_total = 0;
+
+	    array_unshift( $totals, array(
+			    'code'       => 'action_total',
+			    'title'      => 'Скидка по акции',
+			    'value'      => $action_total,
+			    'sort_order' => '1',
+			    'text'       => $this->simplecheckout->formatCurrency( $action_total ),
+			    'pre_title'  => '',
+		    )
+	    );
+	    $discount_total_position = 1;
+
+        foreach ($totals as $k=>$t) {
+
+        	switch ($t['code']) {
+		        case 'sub_total':
+			        unset( $totals[ $k ] );
+			        continue;
+		        case 'coupon':
+		        	$coupon_exists = true;
+			        $totals[ $k ]['pre_title'] = 'Купон применяется к товару без акции.';
+			        $totals[ $k ]['title'] = 'Скидка по купону';
+			        $totals[ $k ]['text'] = ltrim($t['text'], '-');
+			        $coupon_total = - $t['value'];
+			        $discount_total_position = $k;
+			        break;
+		        case 'total':
+		        	// 7. В самом низу таблицы "Итого" с окончательной суммой.
+			        // 10. Товарые услуги по ремонту, необходимо чтобы их сумма не учитывалась в корзине
+					// 11. Чтобы сумма по услугам ремонта не считалась в ИТОГО в самой нижней строчке таблицы корзины.
+					// 12. Фраза "Оплата по ремонту осуществляется после оказания услуги", чтобы появлялась слева от нижнего "Итого", если в корзине есть товарные услуги по ремонту.
+			        if (count($products) - count($this->cart->getProductsWithoutRemonts()))
+			            $totals[  $k ]['pre_title'] = 'Оплата по ремонту осуществляется после оказания услуги.';
+			        else
+				        $totals[ $k ]['pre_title'] = '';
+			        break;
+		        default:
+			        $totals[ $k ]['pre_title'] = '';
+	        }
+        }
+
+        if(!$coupon_exists) {
+	        array_splice($totals, $discount_total_position, 0, array([
+		        'code' => 'coupon',
+		        'title' => 'Скидка по купону',
+		        'value' => 0,
+		        'sort_order' => '2',
+		        'text' => $this->simplecheckout->formatCurrency(0),
+		        'pre_title' => '',
+	        ]));
+	        $discount_total_position += 1;
+        }
+
+	    // 6. Ниже скидок и их сумм должна идти "сумма скидки составила:"
+
+        $discount_total = $action_total + $coupon_total;
+
+        array_splice($totals, $discount_total_position, 0, array([
+	        'code' => 'discount_total',
+	        'title' => 'Сумма скидки составила',
+	        'value' => $discount_total,
+	        'sort_order' => '3',
+	        'text' => $this->simplecheckout->formatCurrency($discount_total),
+	        'pre_title' => '',
+        ]));
+
+
+
+/* -- / by sinelun@gmail.com -- */
 
         $this->_templateData['totals'] = $totals;
 
@@ -525,33 +643,80 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
             $this->session->data['reward'] = $this->request->post['reward'];
         }
     }
+/* -- Task 2020-09-29 by sinelun@gmail.com : /f+f
+		Получение информации о купоне из данных сессии для $this->coupon_price_calculation()
+-- */
+//    private function validateCoupon() {
+//        $version = $this->simplecheckout->getOpencartVersion();
+//
+//        if ($version < 210) {
+//            $this->load->model('checkout/coupon');
+//        } else {
+//            $this->simplecheckout->loadModel('total/coupon');
+//        }
+//
+//        $error = false;
+//
+//        if (!empty($this->request->post['coupon'])) {
+//            if ($version < 210) {
+//                $coupon_info = $this->model_checkout_coupon->getCoupon($this->request->post['coupon']);
+//            } else {
+//                $coupon_info = $this->model_total_coupon->getCoupon($this->request->post['coupon']);
+//            }
+//
+//            if (!$coupon_info) {
+//                self::$error['warning'] = $this->language->get('error_coupon');
+//                $error = true;
+//            }
+//        }
+//
+//        return !$error;
+//    }
 
-    private function validateCoupon() {
-        $version = $this->simplecheckout->getOpencartVersion();
+	private function validateCoupon($index=false) {
+		$version = $this->simplecheckout->getOpencartVersion();
 
-        if ($version < 210) {
-            $this->load->model('checkout/coupon');
-        } else {
-            $this->simplecheckout->loadModel('total/coupon');
-        }
+		if ($version < 210) {
+			$this->load->model('checkout/coupon');
+		} else {
+			$this->simplecheckout->loadModel('total/coupon');
+		}
 
-        $error = false;
+		$error = false;
 
-        if (!empty($this->request->post['coupon'])) {
-            if ($version < 210) {
-                $coupon_info = $this->model_checkout_coupon->getCoupon($this->request->post['coupon']);
-            } else {
-                $coupon_info = $this->model_total_coupon->getCoupon($this->request->post['coupon']);
-            }
+		if ($index) {
+			if (!empty($this->session->data['coupon'])) {
+				if ($version < 210) {
+					$this->coupon_info = $this->model_checkout_coupon->getCoupon($this->session->data['coupon']);
+				} else {
+					$this->coupon_info = $this->model_total_coupon->getCoupon($this->session->data['coupon']);
+				}
 
-            if (!$coupon_info) {
-                self::$error['warning'] = $this->language->get('error_coupon');
-                $error = true;
-            }
-        }
+				// Если нет информации о купоне или если его тип "не проценты"
+				if (!$this->coupon_info or $this->coupon_info['type'] != 'P') {
+					self::$error['warning'] = $this->language->get('error_coupon');
+					$error = true;
+				}
+			}
+		} else {
+			if (!empty($this->request->post['coupon'])) {
+				if ($version < 210) {
+					$coupon_info = $this->model_checkout_coupon->getCoupon($this->request->post['coupon']);
+				} else {
+					$coupon_info = $this->model_total_coupon->getCoupon($this->request->post['coupon']);
+				}
 
-        return !$error;
-    }
+				if (!$coupon_info or $coupon_info['type'] != 'P') {
+					self::$error['warning'] = $this->language->get('error_coupon');
+					$error = true;
+				}
+			}
+		}
+
+		return !$error;
+	}
+
+/* / by sinelun@gmail.com -- */
 
     private function validateVoucher() {
         $version = $this->simplecheckout->getOpencartVersion();
@@ -609,5 +774,34 @@ class ControllerCheckoutSimpleCheckoutCart extends SimpleController {
 
         return !$error;
     }
+
+/* -- Task 2020-09-29/3 by sinelun@gmail.com -- */
+	/**
+	 * Расчёт и установка цены товара со скидкой по купону
+	 */
+	private function coupon_price_calculation(&$product) {
+		$product['coupon_discount'] = 0;
+
+		if($product['has_action'] or
+		    $product['is_remont'] or
+			empty($this->session->data['coupon']) or
+			!$this->validateCoupon(true)) return;
+
+		$coupon_info = $this->coupon_info; // устанавливается в $this->validateCoupon()
+
+		if (!$coupon_info['product']) {
+			$status = true;
+		} else {
+			$status = in_array($product['product_id'], $coupon_info['product']);
+		}
+
+		if ($status) {
+			$product['coupon_discount'] = $product['price'] / 100 * $coupon_info['discount'];
+			$product['price'] = $product['price'] - $product['coupon_discount'];
+		}
+	}
+
+/* -- / by sinelun@gmail.com -- */
+
 }
 ?>

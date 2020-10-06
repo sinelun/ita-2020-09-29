@@ -2,11 +2,12 @@
 namespace Cart;
 class Cart {
 	private $data = array();
-/* -- Task 2020-09-29/10,11
+/* -- Task 2020-09-29/10,11 by sinelun@gmail.com
 "10. Товарые услуги по ремонту, которые можно положить в корзину https://ita-group.ru/uslugi-po-remontu-i-obslujivaniu. Они сделаны как обычный товар. Но нам необходимо чтобы их сумма не учитывалась в корзине, так как оплата по ним осуществляется после оказания услуги.
 11. Чтобы сумма по услугам ремонта не считалась в ИТОГО в самой нижней строчке таблицы корзины."
-by sinelun@gmail.com -- */
-	public $remont_category_ids = array(316, 317, 318, 319, 554, 555, 556, 584);  // категории ремонта
+-- */
+	# FIXME Убрать последнюю категорию для тестов
+	public $remont_category_ids = array(316, 317, 318, 319, 554, 555, 556, 584,   56);  // категории ремонта
 	private $remonts = array();  // товары категорий ремонта
 /* -- / by sinelun@gmail.com -- */
 
@@ -245,7 +246,7 @@ by sinelun@gmail.com -- */
 
 				if ($product_special_query->num_rows) {
 					$price = $product_special_query->row['price'];
-/* -- Task 2020-09-29/1 (2) by sinelun@gmail.com -- */
+/* -- Task 2020-09-29/1 by sinelun@gmail.com -- */
 					$has_action = true;  // на товар есть акция
 /* -- / by sinelun@gmail.com -- */
 				}
@@ -302,7 +303,9 @@ by sinelun@gmail.com -- */
 					'cart_id'         => $cart['cart_id'],
 					'product_id'      => $product_query->row['product_id'],
 					'name'            => $product_query->row['name'],
-/* -- Task 2020-09-29/8 "8. Вместо "Модель" нужно, чтобы отображался артикул (мы поле модель не будем использовать больше)." by sinelun@gmail.com : /1+1 -- */
+/* -- Task 2020-09-29/8 by sinelun@gmail.com : /1+1
+		8. Вместо "Модель" нужно, чтобы отображался артикул (мы поле модель не будем использовать больше).
+-- */
 //					'model'           => $product_query->row['model'],
 					'model'           => $product_query->row['sku'],
 /* -- / by sinelun@gmail.com -- */
@@ -315,9 +318,10 @@ by sinelun@gmail.com -- */
 					'subtract'        => $product_query->row['subtract'],
 					'stock'           => $stock,
 					'price'           => ($price + $option_price),
-/* -- Task 2020-09-29/1 (3) by sinelun@gmail.com -- */
+/* -- Task 2020-09-29 by sinelun@gmail.com -- */
 					'old_price'       => ($old_price + $option_price),  // цена без скидки
 					'has_action'      => $has_action,  // есть ли скидка
+					'is_remont'       => ! $this->product_is_remont_filter($product_query->row),  // товар относится к категории ремонта
 /* -- / by sinelun@gmail.com -- */
 					'total'           => ($price + $option_price) * $cart['quantity'],
 					'reward'          => $reward * $cart['quantity'],
@@ -354,7 +358,7 @@ by sinelun@gmail.com -- */
                 $this->losted_cart->customer->removeLabel();
             }
         }
-        /* Losted Cart by Artem Pitov */            
+        /* Losted Cart by Artem Pitov */
             
 		return $product_data;
 	}
@@ -364,9 +368,10 @@ by sinelun@gmail.com -- */
 	/* - 10,11) Товары не относящиеся к ремонту - */
 
 	/**
-	 * Устанавливает товары, связанные с ремонтом
+	 * Устанавливает товары, связанные с ремонтом,
+	 * выбирая из БД те, что входят в заданный список категорий ($this->remont_category_ids)
 	 */
-	private function setRemonts() {
+	public function setRemonts() {
 
 		$categories = implode(',', $this->remont_category_ids);
 
@@ -386,7 +391,7 @@ by sinelun@gmail.com -- */
 	}
 
 	/**
-	 * Возвращает товары не относящиеся к ремонту
+	 * Возвращает товары в корзине, не относящиеся к ремонту
 	 */
 	public function getProductsWithoutRemonts() {
 		$this->setRemonts();
@@ -394,6 +399,7 @@ by sinelun@gmail.com -- */
 	}
 
 	/* - 1) Не акционные товары для купонов - */
+
 	private function product_has_action_filter($product) {
 		return ! $product['has_action'];
 	}
@@ -453,16 +459,21 @@ by sinelun@gmail.com -- */
 	public function getSubTotal() {
 		$total = 0;
 
-		foreach ($this->getProducts() as $product) {
+/* -- Task 2020-09-29/11 by sinelun@gmail.com : /1+1
+		11. Чтобы сумма по услугам ремонта не считалась в ИТОГО в самой нижней строчке таблицы корзины.
+-- */
+//		foreach ($this->getProducts() as $product) {
+		foreach ($this->getProductsWithoutRemonts() as $product) {
+/* -- / by sinelun@gmail.com -- */
 			$total += $product['total'];
 		}
 
 		return $total;
 	}
 
-	/* -- Task 2020-09-29/1 by sinelun@gmail.com -- */
+/* -- Task 2020-09-29 by sinelun@gmail.com -- */
 	/**
-	 * For system\storage\modification\system\library\cart\cart.php :
+	 * For /system/library/cart/cart.php :
 	 *  ModelExtensionTotalCoupon : getTotal($total) & getCoupon($code)
 	 */
 	public function getSubTotalCoupon() {
@@ -474,7 +485,7 @@ by sinelun@gmail.com -- */
 
 		return $total;
 	}
-	/* -- / by sinelun@gmail.com -- */
+/* -- / by sinelun@gmail.com -- */
 
 	public function getTaxes() {
 		$tax_data = array();
