@@ -52,7 +52,10 @@ class ModelExtensionTotalCoupon extends Model {
 			$product_data = array();
 
 			if ($coupon_product_data || $coupon_category_data) {
-				foreach ($this->cart->getProducts() as $product) {
+/* -- Task 2020-09-29/1 by sinelun@gmail.com : /1+1 -- */
+//				foreach ($this->cart->getProducts() as $product) {
+				foreach ($this->cart->getProductsCoupon() as $product) {
+/* -- / by sinelun@gmail.com -- */
 					if (in_array($product['product_id'], $coupon_product_data)) {
 						$product_data[] = $product['product_id'];
 
@@ -115,7 +118,7 @@ class ModelExtensionTotalCoupon extends Model {
 				} else {
 					$sub_total = 0;
 
-/* -- Task 2020-09-29/1 (6) by sinelun@gmail.com : /1+1 -- */
+/* -- Task 2020-09-29/1 by sinelun@gmail.com : /1+1 -- */
 //					foreach ($this->cart->getProducts() as $product) {
 					foreach ($this->cart->getProductsCoupon() as $product) {
 /* -- / sinelun@gmail.com -- */
@@ -129,7 +132,7 @@ class ModelExtensionTotalCoupon extends Model {
 					$coupon_info['discount'] = min($coupon_info['discount'], $sub_total);
 				}
 
-/* -- Task 2020-09-29/1 (7) by sinelun@gmail.com : /1+1 -- */
+/* -- Task 2020-09-29/1 by sinelun@gmail.com : /1+1 -- */
 //				foreach ($this->cart->getProducts() as $product) {
 				foreach ($this->cart->getProductsCoupon() as $product) {
 /* -- / sinelun@gmail.com -- */

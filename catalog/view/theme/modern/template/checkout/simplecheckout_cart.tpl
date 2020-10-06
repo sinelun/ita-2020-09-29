@@ -89,7 +89,30 @@
                             </span>
                         </div>
                     </td>
+<?php /* -- Task 2020-09-29/2 by sinelun@gmail.com
+           2. Если есть акционный товар в корзине или применяется купон или и то и то:
+              2.1. Цена должна быть перечеркнутой в колонке цена.
+              2.2. Ниже должно быть написано, что применилось "купон" или "акция".
+--  */ ?>
+<?php if (false) { // commented original ?>
                     <td class="price"><?php echo $product['price']; ?></td>
+<?php } ?>
+                    <td class="price">
+                        <?php if ($product['has_action']) { ?>
+                            <span style="color: #CF395B; text-decoration: line-through;">
+                                <?php echo $product['price']; ?>
+                            </span><br>
+                            <span style="color: #0380A1; padding-right: 1em">акция</span>
+                        <?php } elseif ($product['coupon_discount']) { ?>
+                            <span style="color: #CF395B; text-decoration: line-through;">
+                                <?php echo $product['price']; ?>
+                            </span><br>
+                        <span style="color: #0380A1; padding-right: 1em">купон</span>
+                        <?php } else { ?>
+                                <?php echo $product['price']; ?>
+                        <?php } ?>
+                    </td>
+<?php /* -- / sinelun@gmail.com --  */ ?>
                     <td class="total"><?php echo $product['total']; ?></td>
                     <td class="remove">
                     </td>
@@ -112,7 +135,9 @@
         </table>
     </div>
 
-<?php /* -- Task 2020-09-29/4 ("4. Поле для ввода купона должно идти после товаров.") by sinelun@gmail.com --  */ ?>
+<?php /* -- Task 2020-09-29/4 by sinelun@gmail.com
+           4. Поле для ввода купона должно идти после товаров.
+--  */ ?>
 
 <?php if (isset($modules['coupon'])) { ?>
 <div class="simplecheckout-cart-total">
@@ -131,6 +156,12 @@
 <?php } ?>
 <?php foreach ($totals as $total) { ?>
 <div class="simplecheckout-cart-total" id="total_<?php echo $total['code']; ?>">
+<?php /* -- Task 2020-09-29/9,12 by sinelun@gmail.com
+           9. Фраза "Купон применяется к товару без акции" должна появляться, когда применен купон.
+           12. Фраза "Оплата по ремонту осуществляется после оказания услуги", чтобы появлялась слева от нижнего "Итого", если в корзине есть товарные услуги по ремонту.
+--  */ ?>
+    <span style="color: #CF395B"><b><?php echo $total['pre_title']; ?></b></span>
+<?php /* -- /(9,12) sinelun@gmail.com --  */ ?>
     <span><b><?php echo $total['title']; ?>:</b></span>
     <span class="simplecheckout-cart-total-value"><?php echo $total['text']; ?></span>
     <span class="simplecheckout-cart-total-remove">
@@ -147,11 +178,11 @@
 </div>
 <?php } ?>
 
-<?php /* -- the end of sinelun@gmail.com 's insertion --  */ ?>
+<?php /* -- /(4) sinelun@gmail.com --  */ ?>
 
 
-<?php /* -- Task 2020-09-29/4 (2) by sinelun@gmail.com
-            The next code constructions ('if (false) { //') are intended for excluding original code from the output.
+<?php /* -- Task 2020-09-29/4 by sinelun@gmail.com
+            The next code constructions (if (false) { // ... ) are intended for excluding original code from the output.
             Remove them to return to the original.
  --  */ ?>
 
@@ -188,7 +219,7 @@
     </div>
 <?php } ?>
 
-<?php /* -- the end of sinelun@gmail.com 's edition --  */ ?>
+<?php /* -- / sinelun@gmail.com --  */ ?>
 
 <?php if (isset($modules['coupon']) || (isset($modules['reward']) && $points > 0) || isset($modules['voucher'])) { ?>
     <div class="simplecheckout-cart-total simplecheckout-cart-buttons">
